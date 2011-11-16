@@ -19,7 +19,7 @@ We will first create a sub-directory in your home directory::
   mkdir install
   cd install
 
-Now, grab a copy of our stress test source:
+Now, grab a copy of our stress test source::
 
   git clone https://github.com/quanta-research-cambridge/openstack-stress-test.git
 
