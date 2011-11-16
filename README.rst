@@ -14,7 +14,7 @@ Installation
 ------------
 
 The code uses some of kong's libraries. To install kong /
-openstack-integration-tests:
+openstack-integration-tests::
 
   git clone https://github.com/openstack/openstack-integration-tests.git 
 
@@ -22,12 +22,12 @@ Switch to the kong version that we developed with (TO DO: test latest version of
 
   git checkout 45333b375c533ba11a9048061a55253ab22efd49
 
-Set PYTHONPATH to include kong. You may want to edit your .bashrc (or
-shell configuration) to modify the PYTHONPATH environment variable::
+Set ``PYTHONPATH`` to include ``kong``. You may want to edit your ``.bashrc`` (or
+shell configuration) to modify the ``PYTHONPATH`` environment variable::
 
   export PYTHONPATH=$PWD/openstack-integration-tests:$PYTHONPATH
 
-There are a few packages that kong depends on:
+There are a few packages that kong depends on::
 
   paramiko
 
@@ -35,7 +35,7 @@ To install it on Ubuntu 11.04::
 
   sudo apt-get -y install python-paramiko
 
-The following environment variables will also need to be defined:
+The following environment variables will also need to be defined::
 
   NOVA_API_KEY
   NOVA_USERNAME
@@ -43,20 +43,24 @@ The following environment variables will also need to be defined:
   NOVA_URL
   NOVA_VERSION
 
-In our setup, we use nova-manage.py to generate a file that contains these values.
+In our setup, we use ``nova-manage.py`` to generate a file that
+contains these values. The file is then sourced before the test is
+executed.
 
 Finally, you will need to provide the path to the private SSH key that
 provides public key SSH access to the Nova controller. Set the environment
-variable NOVA_SSH_KEY_PATH to this value. For example::
+variable ``NOVA_SSH_KEY_PATH`` to this value. For example::
 
-  NOVA_SSH_KEY_PATH=/home/tester/.ssh/id_rsa.nova
+  export NOVA_SSH_KEY_PATH=/home/tester/.ssh/id_rsa.nova
 
-where id_rsa.nova is the private key that corresponds to a public
-key stored in the authorized_keys file for the root user on the Nova
-controller.
+where ``/home/tester/.ssh/id_rsa.nova`` is the private key that
+corresponds to a public key stored in the ``/.ssh/authorized_keys``
+file for the ``root`` user on the Nova controller.
 
 Running the sample test
 -----------------------
+
+To test your installation, do the following::
 
   cd stress
   python user_script_sample.py
