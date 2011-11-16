@@ -13,17 +13,32 @@ assumes your working Nova cluster understands Nova API 1.1.
 Installation
 ------------
 
-The code uses some of kong's libraries. To install kong /
-openstack-integration-tests::
+We will first create a sub-directory in your home directory:: 
+
+  cd ~
+  mkdir install
+  cd install
+
+Now, grab a copy of our stress test source:
+
+  git clone https://github.com/quanta-research-cambridge/openstack-stress-test.git
+
+Our code uses some of kong's libraries. To install kong /
+openstack-integration-tests, we first get a copy of kong from their git
+repository::
 
   git clone https://github.com/openstack/openstack-integration-tests.git 
 
 Switch to the kong version that we developed with (TO DO: test latest version of kong)::
 
+  cd openstack-integration-tests
   git checkout 45333b375c533ba11a9048061a55253ab22efd49
+  cd ..
 
-Set ``PYTHONPATH`` to include ``kong``. You may want to edit your ``.bashrc`` (or
-shell configuration) to modify the ``PYTHONPATH`` environment variable::
+We need to set ``PYTHONPATH`` to include ``kong``. You may want to
+edit your ``.bashrc`` (or shell configuration) to modify the
+``PYTHONPATH`` environment variable. For now, simply execute the
+following statement::
 
   export PYTHONPATH=$PWD/openstack-integration-tests:$PYTHONPATH
 
@@ -43,9 +58,9 @@ The following environment variables will also need to be defined::
   NOVA_URL
   NOVA_VERSION
 
-In our setup, we use ``nova-manage.py`` to generate a file that
-contains these values. The file is then sourced before the test is
-executed.
+In our setup, we use ``nova-manage [project name] [zipfile name]`` to
+generate a file that contains these values. The file is then sourced
+before the test is executed.
 
 Finally, you will need to provide the path to the private SSH key that
 provides public key SSH access to the Nova controller. Set the environment
@@ -62,7 +77,7 @@ Running the sample test
 
 To test your installation, do the following::
 
-  cd stress
+  cd openstack-stress-test/stress
   python user_script_sample.py
 
 This sample test tries to create a few VMs and kill a few VMs.
