@@ -83,7 +83,7 @@ def error_in_logs(nodes):
                                 'egrep "ERROR\|TRACE" /var/log/nova/*.log',
                                 check=False)
         if len(errors) > 0:
-            logging.error('%s: %s', (node, errors))
+            logging.error('%s: %s' % (node, errors))
             return False
     return False
 
@@ -95,7 +95,7 @@ def bash_openstack(connection,
     # get keyword arguments
     duration=kwargs.get('duration', datetime.timedelta(seconds=10))
     seed=kwargs.get('seed', None)
-    sleep_time=int(kwargs.get('sleep_time', 3))
+    sleep_time=float(kwargs.get('sleep_time', 3000))/1000
     max_vms=int(kwargs.get('max_vms', 32))
     test_name=kwargs.get('test_name', 'unamed test')
 
@@ -164,5 +164,8 @@ def bash_openstack(connection,
         logging.info('killed %s' % kill_target['id'])
         state.set_machine_state(kill_target['id'], None)
     
-    logging.info('*** Test succeeded ***')
+    if test_succeeded:
+        logging.info('*** Test succeeded ***')
+    else:
+        logging.info('*** Test had errors ***')
     return test_succeeded
