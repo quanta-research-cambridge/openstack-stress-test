@@ -1,8 +1,9 @@
 OpenStack Basher Test System
 ============================
 
-This is a framework for stress testing a OpenStack Nova cluster.
+This is a framework for stress testing an OpenStack Nova cluster.
 
+<<<<<<< HEAD
 Nova Cluster Installation
 -------------------------
 
@@ -19,9 +20,9 @@ We will first create a subdirectory in your home directory::
   mkdir install
   cd install
 
-Now, grab a copy of our stress test source::
+Clone a copy of openstack-stress-test::
 
-  git clone https://github.com/quanta-research-cambridge/openstack-stress-test.git
+  git clone https://github.com/quanta-research-cambridge/openstack-stress-test.g
 
 Set ``PYTHONPATH`` to include the  ``stress`` module. You may want to
 edit your ``.bashrc`` (or shell configuration) to modify the
@@ -47,7 +48,7 @@ edit your ``.bashrc`` (or shell configuration) to modify the
 ``PYTHONPATH`` environment variable. For now, simply execute the
 following statement::
 
-  export PYTHONPATH=$PWD/openstack-integration-tests:$PYTHONPATH
+  export PYTHONPATH=[ROOT]/openstack-integration-tests:[ROOT]/openstack-stress-test:$PYTHONPATH
 
 There are a few packages that kong depends on::
 
