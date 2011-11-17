@@ -23,7 +23,7 @@ Now, grab a copy of our stress test source::
 
   git clone https://github.com/quanta-research-cambridge/openstack-stress-test.git
 
-We need to set ``PYTHONPATH`` to include our  ``stress`` module. You may want to
+Set ``PYTHONPATH`` to include the  ``stress`` module. You may want to
 edit your ``.bashrc`` (or shell configuration) to modify the
 ``PYTHONPATH`` environment variable. For now, simply execute the
 following statement::
@@ -31,15 +31,15 @@ following statement::
   export PYTHONPATH=$HOME/install/openstack-stress-test:$PYTHONPATH
 
 Our code uses some of kong's libraries. To install kong /
-openstack-integration-tests, we first get a copy of kong from their git
+openstack-integration-tests, get a copy of kong from their git
 repository::
 
   git clone https://github.com/openstack/openstack-integration-tests.git 
 
-Switch to the kong version that we developed with (TO DO: test latest version of kong)::
+Switch to the kong version that we developed with::
 
   cd openstack-integration-tests
-  git checkout 45333b375c533ba11a9048061a55253ab22efd49
+  git checkout 8a84d2efc453c9c1c5210339c4b1724736a48230
   cd ..
 
 We need to set ``PYTHONPATH`` to include ``kong``. You may want to
@@ -101,10 +101,7 @@ tools, you will need to install python-novaclient::
   git clone https://github.com/rackspace/python-novaclient.git
   cd python-novaclient
 
-We used commit number
-``2b0d82c05cf9f19c01752a75804cdcadf80e82ee``. You can use ``git
-checkout`` to get that particular commit, then you can install
-python-novaclient::
+Install python-novaclient::
 
   sudo python setup.py install
 
