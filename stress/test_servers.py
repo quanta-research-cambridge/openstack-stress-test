@@ -90,8 +90,8 @@ class TestCreateVM(test_case.TestCase):
 
     def run(self, connection, state, *pargs, **kwargs):
         """Build a server with a password"""
-        # Need to check that preconditions are satisfied FIXME
 
+        # restrict number of instances we can launch
         if len(state.get_machines()) >= state.get_max_machines():
             # self._logger.info("maximum number of machines created: %d" % 
             #                   state.get_max_machines())
@@ -159,7 +159,10 @@ class VerifyCreateVM(pending_action.PendingAction):
                                self._target['id'])
             return True
 
-        if time.time() - self._start_time > self._timeout:
+        time_diff = time.time() - self._start_time
+        if time_diff > self._timeout:
+            self._logger.error('%d exceeded launch server timeout of %d' %
+                               (time_diff, self._timeout))
             raise TimeoutException
 
         admin_pass = self._target['adminPass']
@@ -208,8 +211,9 @@ class VerifyCreateVM(pending_action.PendingAction):
 
 class TestKillActiveVM(test_case.TestCase):
 
-    def run(self, connection, state, *pargs, **kargs):
-        # FIXME: check for preconditions
+    def run(self, connection, state, *pargs, **kwargs):
+        
+        # check for active machines
         vms = state.get_machines()
         active_vms = [v for k, v in vms.iteritems() if v and v[1] == 'ACTIVE']
         # no active vms, so return null
@@ -217,6 +221,8 @@ class TestKillActiveVM(test_case.TestCase):
             self._logger.info('no ACTIVE machines to delete')
             return
 
+        _timeout = kwargs.get('timeout', 600)
+        
         target = random.choice(active_vms)
         kill_target = target[0]
         connection.delete_server(kill_target['id'])
@@ -224,7 +230,7 @@ class TestKillActiveVM(test_case.TestCase):
                           kill_target['id'])
         state.set_machine_state(kill_target['id'],
                                 (kill_target, 'TERMINATING'))
-        return VerifyKillActiveVM(connection, state, kill_target, timeout=60)
+        return VerifyKillActiveVM(connection, state, kill_target, timeout=_timeout)
 
 class VerifyKillActiveVM(pending_action.PendingAction):
 
@@ -234,7 +240,10 @@ class VerifyKillActiveVM(pending_action.PendingAction):
         if (not self._target['id'] in self._state.get_machines().keys()):
             return False
 
-        if time.time() - self._start_time > self._timeout:
+        time_diff = time.time() - self._start_time
+        if time_diff > self._timeout:
+            self._logger.error('server %s: %d exceeds terminate timeout of %d' %
+                               (self._target['id'], time_diff, self._timeout))
             raise TimeoutException
 
         try:
@@ -244,22 +253,23 @@ class VerifyKillActiveVM(pending_action.PendingAction):
             return False
 
         # if we get a 404 response, is the machine really gone?
-        self._logger.info('machine %s: DELETED' %
-                          self._target['id'])
+        self._logger.info('machine %s: DELETED [%.1f secs elapsed]' %
+                          (self._target['id'], time.time() - self._start_time))
         self._state.set_machine_state(self._target['id'], None)
 
         return True
 
 class TestKillAnyVM(test_case.TestCase):
 
-    def run(self, connection, state, *pargs, **kargs):
-        # FIXME: check for preconditions
-        vms = state.get_machines()
+    def run(self, connection, state, *pargs, **kwargs):
 
+        vms = state.get_machines()
         # no vms, so return null
         if not vms:
             self._logger.info('no active machines to delete')
             return
+
+        _timeout = kwargs.get('timeout', 60)
 
         target = random.choice(vms)
         kill_target = target[0]
@@ -268,7 +278,7 @@ class TestKillAnyVM(test_case.TestCase):
         self._state.set_machine_state(kill_target['id'],
                                       (kill_target, 'TERMINATING'))
         # verify object will do the same thing as the active VM
-        return VerifyKillAnyVM(connection, state, kill_target, timeout=60)
+        return VerifyKillAnyVM(connection, state, kill_target, timeout=_timeout)
 
 VerifyKillAnyVM = VerifyKillActiveVM
 
@@ -277,8 +287,6 @@ class TestUpdateVMName(test_case.TestCase):
     def run(self, connection, state, *pargs, **kwargs):
         """Change the name of active server"""
 
-        _timeout = kwargs.get('timeout', 600)
-
         # select one machine from active ones
         vms = state.get_machines()
         active_vms = [v for k, v in vms.iteritems() if v and v[1] == 'ACTIVE']
@@ -286,6 +294,9 @@ class TestUpdateVMName(test_case.TestCase):
         if not active_vms:
             self._logger.info('no active machines to update')
             return
+
+        _timeout = kwargs.get('timeout', 600)
+
         target = random.choice(active_vms)
         update_target = target[0]
 
