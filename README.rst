@@ -85,24 +85,28 @@ This sample test tries to create a few VMs and kill a few VMs.
 Additional Tools
 ----------------
 
-Sometimes the tests don't finish, or there are failures. In these cases, you may want to clean out the nova cluster. We have provided some scripts to do this in the ``tools`` subdirectory. To use these tools, you will need to install python-novaclient::
+Sometimes the tests don't finish, or there are failures. In these
+cases, you may want to clean out the nova cluster. We have provided
+some scripts to do this in the ``tools`` subdirectory. To use these
+tools, you will need to install python-novaclient::
 
   cd ~/install
   git clone https://github.com/rackspace/python-novaclient.git
   cd python-novaclient
 
-We used commit ``2b0d82c05cf9f19c01752a75804cdcadf80e82ee``. You can
-use ``git checkout`` to get that particular commit, then you can
-install python-novaclient:: 
+We used commit number
+``2b0d82c05cf9f19c01752a75804cdcadf80e82ee``. You can use ``git
+checkout`` to get that particular commit, then you can install
+python-novaclient::
 
   python setup.py install
 
-You can then use the tools::
+You can then use the following script to destroy any keypairs,
+floating ips, and servers.::
 
   cd openstack-stress-test/util
   ./nova_destroy_all.py
 
-This script will destroy any keypairs, floating ips, and servers.
 
 
 
