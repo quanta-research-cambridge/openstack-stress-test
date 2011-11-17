@@ -3,7 +3,6 @@ OpenStack Basher Test System
 
 This is a framework for stress testing an OpenStack Nova cluster.
 
-<<<<<<< HEAD
 Nova Cluster Installation
 -------------------------
 

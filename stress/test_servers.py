@@ -33,7 +33,7 @@ import pending_action
 from basherexceptions import *
 import utils.env
 
-# FIXME: Move to util.py?
+# borrowed from openstack-integration-tests/kong
 def assert_server_entity(server, connection):
 
     actual_keys = set(server.keys())
@@ -189,13 +189,13 @@ class VerifyCreateVM(pending_action.PendingAction):
         server = self._connection.get_server(self._target['id'])
 
         # Find private IP of server
-        try:
-            (_, network) = server['addresses'].popitem()
-            ip = network[0]['addr']
-        except KeyError:
-            self._logger.error('could not get ip address for machine %s' %
-                               self._target['id'])
-            raise Exception
+        # try:
+        #     (_, network) = server['addresses'].popitem()
+        #     ip = network[0]['addr']
+        # except KeyError:
+        #     self._logger.error('could not get ip address for machine %s' %
+        #                        self._target['id'])
+        #     raise Exception
 
         # client = ssh.Client(ip, 'root', admin_pass, 60)
         # if not client.test_connection_auth():
