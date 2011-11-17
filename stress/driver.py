@@ -163,5 +163,6 @@ def bash_openstack(connection,
             raise
         logging.info('killed %s' % kill_target['id'])
         state.set_machine_state(kill_target['id'], None)
-
+    
+    logging.info('*** Test succeeded ***')
     return test_succeeded
