@@ -52,7 +52,7 @@ create_keypair(nova, key_name)
 bash_openstack(nova,
                choice_spec,
                duration=datetime.timedelta(seconds=10),
-               sleep_time=1,
+               sleep_time=1000, # in milliseconds
                seed=None,
                test_name="simple create and delete",
                max_vms=10)
