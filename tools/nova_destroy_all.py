@@ -38,11 +38,11 @@ print "total keypairs: %3d, total floating ips: %3d" % \
      len(floating_ips_list))
 
 print "deleting all servers"
-for s in  server_list:
+for s in server_list:
     s.delete()
 
 print "deleting all keypairs"
-for s in  keypairs_list:
+for s in keypairs_list:
     s.delete()
 
 print "deleting all floating_ips"

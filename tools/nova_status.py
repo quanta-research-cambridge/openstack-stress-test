@@ -34,10 +34,12 @@ print "total servers: %3d, total flavors: %3d, total images: %3d" % \
      len(flavor_list),
      len(images_list))
 
+print "total keypairs: %3d, total floating ips: %3d" % \
+    (len(keypairs_list),
+     len(floating_ips_list))
+
 print "flavors:\t", flavor_list
 print "servers:\t", server_list
 print "images: \t", images_list
 print "keypairs:\t", keypairs_list
 print "floating ips:\t", floating_ips_list
-# for s in  server_list:
-#     s.delete()
