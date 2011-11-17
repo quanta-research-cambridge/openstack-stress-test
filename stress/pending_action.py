@@ -39,10 +39,12 @@ class PendingAction(object):
                 timeout=0
                 )
         except AssertionError:
+            # grab the actual state as we think it is
+            temp_obj = self._state.get_machines()[self._target['id']]
             self._logger.debug(
                 "machine %s in state %s" %
                 (self._target['id'],
-                 self._state.get_machines()[self._target['id']])
+                 temp_obj[1])
                 )
             return False
         return True

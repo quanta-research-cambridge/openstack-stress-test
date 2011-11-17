@@ -94,9 +94,10 @@ def bash_openstack(connection,
 
     # get keyword arguments
     duration=kwargs.get('duration', datetime.timedelta(seconds=10))
-    seed=kwargs.get('seed', 1)
-    sleep_time=kwargs.get('sleep_time', 3)
-    max_vms=kwargs.get('max_vms', 32)
+    seed=kwargs.get('seed', None)
+    sleep_time=int(kwargs.get('sleep_time', 3))
+    max_vms=int(kwargs.get('max_vms', 32))
+    test_name=kwargs.get('test_name', 'unamed test')
 
     computes = get_compute_nodes()
     utils.util.execute_on_all(computes, "rm -f /var/log/nova/*.log")
@@ -110,6 +111,10 @@ def bash_openstack(connection,
     cooldown = False
     logcheck_count = 0
     test_succeeded = True
+    logging.debug('=== Test \"%s\" on %s ===' % (test_name, time.asctime(time.localtime())))
+    for kw in kwargs:
+        logging.debug('\t%s = %s', kw, kwargs[kw])
+
     while True:
         if not cooldown:
             if time.time() < test_end_time:
@@ -126,7 +131,7 @@ def bash_openstack(connection,
             break
         # Retry verifications every 5 seconds.
         if time.time() - last_retry > 5:
-            logging.debug('retry verifications %d tasks', len(retry_list))
+            logging.debug('retry verifications for %d tasks', len(retry_list))
             new_retry_list = []
             for v in retry_list:
                 if not v.retry():

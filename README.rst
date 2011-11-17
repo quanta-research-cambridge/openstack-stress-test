@@ -23,6 +23,13 @@ Now, grab a copy of our stress test source::
 
   git clone https://github.com/quanta-research-cambridge/openstack-stress-test.git
 
+We need to set ``PYTHONPATH`` to include our  ``stress`` module. You may want to
+edit your ``.bashrc`` (or shell configuration) to modify the
+``PYTHONPATH`` environment variable. For now, simply execute the
+following statement::
+
+  export PYTHONPATH=$HOME/install/openstack-stress-test:$PYTHONPATH
+
 Our code uses some of kong's libraries. To install kong /
 openstack-integration-tests, we first get a copy of kong from their git
 repository::
@@ -77,7 +84,7 @@ Running the sample test
 
 To test your installation, do the following::
 
-  cd openstack-stress-test/stress
+  cd ~/install/openstack-stress-test/stress
   python user_script_sample.py
 
 This sample test tries to create a few VMs and kill a few VMs.
@@ -99,12 +106,12 @@ We used commit number
 checkout`` to get that particular commit, then you can install
 python-novaclient::
 
-  python setup.py install
+  sudo python setup.py install
 
 You can then use the following script to destroy any keypairs,
-floating ips, and servers.::
+floating ips, and servers::
 
-  cd openstack-stress-test/util
+  cd ~/install/openstack-stress-test/tools
   ./nova_destroy_all.py
 
 

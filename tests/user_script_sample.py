@@ -24,12 +24,12 @@ import sys
 import kong.nova
 
 # local imports
-from test_case import *
-from test_servers import *
-from basher import BasherChoice
-from driver import *
-from utils.env import *
-from utils.nova import *
+from stress.test_case import *
+from stress.test_servers import *
+from stress.basher import BasherChoice
+from stress.driver import *
+from stress.utils.env import *
+from stress.utils.nova import *
 
 key_name = str(uuid.uuid1())
 
@@ -53,6 +53,8 @@ bash_openstack(nova,
                choice_spec,
                duration=datetime.timedelta(seconds=10),
                sleep_time=1,
+               seed=None,
+               test_name="simple create and delete",
                max_vms=10)
 
 cleanup_keypair(nova, key_name)
