@@ -46,8 +46,8 @@ class PendingAction(object):
                 (self._target['id'],
                  temp_obj[1])
                 )
-            return False
-        return True
+            return temp_obj[1]
+        return state_string
 
     @abc.abstractmethod
     def retry(self):
