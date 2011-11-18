@@ -111,7 +111,8 @@ def bash_openstack(connection,
     cooldown = False
     logcheck_count = 0
     test_succeeded = True
-    logging.debug('=== Test \"%s\" on %s ===' % (test_name, time.asctime(time.localtime())))
+    logging.debug('=== Test \"%s\" on %s ===' % 
+                  (test_name, time.asctime(time.localtime())))
     for kw in kwargs:
         logging.debug('\t%s = %s', kw, kwargs[kw])
 

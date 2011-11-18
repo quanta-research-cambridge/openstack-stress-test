@@ -22,7 +22,7 @@ import time
 
 # import kong modules
 import kong.nova
-from kong.common import ssh
+import kong.common
 import kong.exceptions
 
 # local imports
@@ -45,9 +45,10 @@ class TestRebootVM(test_case.TestCase):
             return
 
         reboot_type = kwargs.get('type', 'SOFT')
+        _timeout = kwargs.get('timeout', 600)
 
         # allocate public address to this vm
-        ip_addr = allocate_ip(connection)
+        _ip_addr = allocate_ip(connection)
 
         # select active vm to reboot and then send request to nova controller
         target = random.choice(active_vms)
@@ -74,7 +75,7 @@ class TestRebootVM(test_case.TestCase):
         # this will throw an exception if timeout is exceeded
         connection.wait_for_server_status(reboot_target['id'],
                                           state_name,
-                                          timeout=60)
+                                          timeout=_timeout)
 
         self._logger.info('machine %s ACTIVE -> REBOOT' %
                           reboot_target['id'])
@@ -83,14 +84,15 @@ class TestRebootVM(test_case.TestCase):
         return VerifyRebootVM(connection,
                               state,
                               reboot_target,
-                              ip_addr=ip_addr)
+                              timeout=_timeout,
+                              ip_addr=_ip_addr)
 
 class VerifyRebootVM(pending_action.PendingAction):
 
-    def __init__(self, connection, state, target_server, ip_addr=None):
+    def __init__(self, connection, state, target_server, timeout=600, ip_addr=None):
         super(VerifyRebootVM, self).__init__(connection,
                                              state,
-                                             created_server,
+                                             target_server,
                                              timeout=timeout)
         self._ip_addr = ip_addr
 
@@ -112,11 +114,14 @@ class VerifyRebootVM(pending_action.PendingAction):
         server = self._connection.get_server(self._target['id'])
 
         # FIXME: fix the ssh.client thing
-        client = ssh.Client(ip, 'ubuntu', admin_pass, 60)
-        if not client.test_connection_auth():
-            self._logger.error('machine: %s, ip: %s, pwd: %s' %
-                               (self._target['id'], ip, admin_pass))
-            raise Exception
+        # client = kong.common.ssh.Client(ip, 'ubuntu', admin_pass, 60)
+        # if not client.test_connection_auth():
+        #     self._logger.error('machine: %s, ip: %s, pwd: %s' %
+        #                        (self._target['id'], ip, admin_pass))
+        #     raise Exception
+
+        if self._ip_addr:
+            deallocate_ip(self._connection, self._ip_addr)
 
         self._logger.info('machine %s REBOOT -> ACTIVE [%.1f secs elapsed]' %
                           (self._target['id'], time.time() - self._start_time))

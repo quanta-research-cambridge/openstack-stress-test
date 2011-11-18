@@ -89,6 +89,15 @@ To test your installation, do the following::
 
 This sample test tries to create a few VMs and kill a few VMs.
 
+Gotchas
+-------
+
+Some of the tests require the use of floating IPs. Ensure that your
+nova cluster has been configured with floating IPs that can be
+allocated and deallocated with the nova command line tool. Floating
+IPs are used for various tasks, e.g., to verify that a system is live
+after reboot.
+
 Additional Tools
 ----------------
 
