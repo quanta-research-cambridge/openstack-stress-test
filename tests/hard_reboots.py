@@ -54,7 +54,7 @@ create_keypair(nova, key_name)
 bash_openstack(nova,
                choice_spec,
                duration=datetime.timedelta(seconds=180),
-               sleep_time=10000, # in milliseconds
+               sleep_time=500, # in milliseconds
                seed=int(time.time()),
                test_name="hard reboots",
                max_vms=32)
