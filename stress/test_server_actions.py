@@ -47,12 +47,13 @@ class TestRebootVM(test_case.TestCase):
         reboot_type = kwargs.get('type', 'SOFT')
         _timeout = kwargs.get('timeout', 600)
 
-        # allocate public address to this vm
-        _ip_addr = allocate_ip(connection)
-
         # select active vm to reboot and then send request to nova controller
         target = random.choice(active_vms)
         reboot_target = target[0]
+
+        # allocate public address to this vm
+        _ip_addr = allocate_ip(connection, reboot_target)
+
         reboot_body = { 'type': reboot_type }
         post_body = json.dumps({'reboot' : reboot_body})
         url = '/servers/%s/action' % reboot_target['id']
@@ -72,35 +73,65 @@ class TestRebootVM(test_case.TestCase):
         self._logger.info('waiting for machine %s to change to %s' %
                           (reboot_target['id'], state_name))
 
-        # this will throw an exception if timeout is exceeded
-        connection.wait_for_server_status(reboot_target['id'],
-                                          state_name,
-                                          timeout=_timeout)
+        # check for state transition
+        try:
+            state_string = state_name
+            connection.wait_for_server_status(
+                reboot_target['id'], state_name, timeout=0
+                )
+        except AssertionError:
+            # grab the actual state as we think it is
+            temp_obj = state.get_machines()[self._target['id']]
+            self._logger.debug(
+                "machine %s in state %s" %
+                (reboot_target['id'], temp_obj[1])
+                )
+            state_string = temp_obj[1]
 
-        self._logger.info('machine %s ACTIVE -> REBOOT' %
-                          reboot_target['id'])
-        state.set_machine_state(reboot_target['id'],
-                                (reboot_target, 'REBOOT'))
+        if state_string == state_name:
+            self._logger.info('machine %s ACTIVE -> %s' %
+                              (reboot_target['id'], state_name))
+            state.set_machine_state(reboot_target['id'],
+                                    (reboot_target, state_name))
+            
         return VerifyRebootVM(connection,
                               state,
                               reboot_target,
                               timeout=_timeout,
+                              reboot_type=reboot_type,
+                              state_name=state_string,
                               ip_addr=_ip_addr)
 
 class VerifyRebootVM(pending_action.PendingAction):
 
-    def __init__(self, connection, state, target_server, timeout=600, ip_addr=None):
+    States = enum('REBOOT_CHECK', 'ACTIVE_CHECK')
+
+    def __init__(self, connection, state, target_server, 
+                 timeout=600,
+                 reboot_type=None,
+                 state_name=None,
+                 ip_addr=None):
         super(VerifyRebootVM, self).__init__(connection,
                                              state,
                                              target_server,
                                              timeout=timeout)
         self._ip_addr = ip_addr
+        # FIX ME: this is a nova bug
+        if reboot_type == 'SOFT':
+            self._reboot_state = 'REBOOT'
+        else:
+            self._reboot_state = 'REBOOT' # should be HARD REBOOT
+
+        if state_name == 'ACTIVE': # was still active, check to see if REBOOT
+            self._retry_state = self.States.REBOOT_CHECK
+        else: # was REBOOT, so now check for ACTIVE
+            self._retry_state = self.States.ACTIVE_CHECK
 
     def retry(self):
-        # don't run reboot verification
-        # if target machine has been deleted or is going to be deleted
+        # don't run reboot verification if target machine has been
+        # deleted or is going to be deleted
         if (self._target['id'] not in self._state.get_machines().keys() or
-            self._state.get_machines()[self._target['id']] == 'TERMINATING'):
+            self._state.get_machines()[self._target['id']][1] == 'TERMINATING'):
             self._logger.debug('machine %s is deleted or TERMINATING' %
                                self._target['id'])
             return True
@@ -108,8 +139,21 @@ class VerifyRebootVM(pending_action.PendingAction):
         if time.time() - self._start_time > self._timeout:
             raise TimeoutException
 
-        if not self._check_for_status('ACTIVE'):
-            return False
+        if self._retry_state == self.States.REBOOT_CHECK:
+            server_state = self._check_for_status(self._reboot_state)
+            if server_state == self._reboot_state:
+                self._logger.info('machine %s ACTIVE -> %s' %
+                                  (self._target['id'], self._reboot_state))
+                self._state.set_machine_state(self._target['id'],
+                                              (self._target, self._reboot_state))
+                self._retry_state = self.States.ACTIVE_CHECK
+            elif server_state == 'ACTIVE':
+                # machine must have gone ACTIVE -> REBOOT ->ACTIVE
+                self._retry_state = self.States.ACTIVE_CHECK
+
+        elif self._retry_state == self.States.ACTIVE_CHECK:
+            if not self._check_for_status('ACTIVE'):
+                return False
 
         server = self._connection.get_server(self._target['id'])
 
@@ -119,15 +163,17 @@ class VerifyRebootVM(pending_action.PendingAction):
         #     self._logger.error('machine: %s, ip: %s, pwd: %s' %
         #                        (self._target['id'], ip, admin_pass))
         #     raise Exception
-
+        
+            
+        self._logger.info('machine %s REBOOT -> ACTIVE [%.1f secs elapsed]' %
+                              (self._target['id'], time.time() - self._start_time))
+        self._state.set_machine_state(self._target['id'],
+                                      (self._target, 'ACTIVE'))
         if self._ip_addr:
             deallocate_ip(self._connection, self._ip_addr)
 
-        self._logger.info('machine %s REBOOT -> ACTIVE [%.1f secs elapsed]' %
-                          (self._target['id'], time.time() - self._start_time))
-        self._state.set_machine_state(self._target['id'],
-                                      (self._target, 'ACTIVE'))
         return True
+
 
 class TestResizeVM(test_case.TestCase):
     """Resize a server (change flavors)"""
@@ -143,6 +189,8 @@ class TestResizeVM(test_case.TestCase):
         target = random.choice(active_vms)
         resize_target = target[0]
         print resize_target
+
+        _timeout = kwargs.get('timeout', 600)
 
         # determine current flavor type, and resize to a different type
         # m1.tiny -> m1.small, m1.small -> m1.tiny
@@ -163,34 +211,39 @@ class TestResizeVM(test_case.TestCase):
             self._logger.error("response: %s" % response)
             raise Exception
 
-        connection.wait_for_server_status(resize_target['id'],
-                                                'RESIZE',
-                                                timeout=120)
+        state_name = check_for_status(connection, resize_target, 'RESIZE')
 
-        self._logger.info('machine %s: ACTIVE -> RESIZE' %
-                          resize_target['id'])
-        state.set_machine_state(resize_target['id'],
-                                (resize_target, 'RESIZE'))
+        if state_name == 'RESIZE':
+            self._logger.info('machine %s: ACTIVE -> RESIZE' %
+                              resize_target['id'])
+            state.set_machine_state(resize_target['id'],
+                                    (resize_target, 'RESIZE'))
+
         return VerifyResizeVM(connection,
                               state,
-                              resize_target)
+                              resize_target,
+                              state_name=state_name,
+                              timeout=_timeout)
 
 class VerifyResizeVM(pending_action.PendingAction):
 
     States = enum('VERIFY_RESIZE_CHECK', 'ACTIVE_CHECK')
 
-    def __init__(self, connection, state, created_server, timeout=300):
+    def __init__(self, connection, state, created_server, 
+                 state_name=None, 
+                 timeout=300):
         super(VerifyResizeVM, self).__init__(connection,
                                              state,
                                              created_server,
                                              timeout=timeout)
         self._retry_state = self.States.VERIFY_RESIZE_CHECK
+        self._state_name = state_name
 
     def retry(self):
         # don't run resize if target machine has been deleted
         # or is going to be deleted
         if (self._target['id'] not in self._state.get_machines().keys() or
-            self._state.get_machines()[self._target['id']] == 'TERMINATING'):
+            self._state.get_machines()[self._target['id']][1] == 'TERMINATING'):
             self._logger.debug('machine %s is deleted or TERMINATING' %
                                self._target['id'])
             return True
@@ -199,7 +252,7 @@ class VerifyResizeVM(pending_action.PendingAction):
             raise TimeoutException
 
         if self._retry_state == self.States.VERIFY_RESIZE_CHECK:
-            if self._check_for_status("VERIFY_RESIZE"):
+            if self._check_for_status('VERIFY_RESIZE') == 'VERIFY_RESIZE':
                 # now issue command to CONFIRM RESIZE
                 post_body = json.dumps({'confirmResize' : null})
                 url = '/servers/%s/action' % self._target['id']
