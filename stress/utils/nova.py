@@ -87,7 +87,8 @@ def cleanup_keypair(connection, name):
             os.remove('%s.priv' % kp['keypair']['name'])
             break
 
-def allocate_ip(connection):
+def allocate_ip(connection, server):
+    # FIXME: check if we have floating ips available
     post_body = json.dumps({'floating_ip': ''})
     url = '/os-floating-ips'
     (resp, body) = connection.request('POST',
@@ -95,10 +96,14 @@ def allocate_ip(connection):
                                       body=post_body)
 
     if(resp.status != 200):
+        logging.info('Could not allocate ip to machine %s' % 
+                     (server['id']))
         logging.error('response: %s' % resp)
-        raise Exception
+        return None
+
     data = json.loads(body)
-    logging.info('Allocated ip %s' % data['floating_ip']['ip'])
+    logging.info('Allocated ip %s to machine %s' % 
+                 (data['floating_ip']['ip'], server['id']))
     return data['floating_ip']['ip']
 
 def deallocate_ip(connection, floating_ip):
@@ -120,8 +125,26 @@ def deallocate_ip(connection, floating_ip):
             if resp.status != 202:
                 logging.error('response: %s' % resp)
                 raise Exception
-            logging.info('Deleting floating ip %s' % floating_ip)
+            logging.info('Deallocating floating ip %s' % floating_ip)
             break
 
 def assign_ip(connection, server, floating_ip):
     pass
+
+def check_for_status(connection, server, state_string):
+    """Check to see if the machine has transitioned states"""
+    try:
+        self._connection.wait_for_server_status(
+            server['id'],
+            state_string,
+            timeout=0
+            )
+    except AssertionError:
+        # grab the actual state as we think it is
+        temp_obj = self._state.get_machines()[server['id']]
+        self._logger.debug(
+            "machine %s in state %s" % (server['id'], temp_obj[1])
+            )
+        return temp_obj[1]
+    return state_string
+    
