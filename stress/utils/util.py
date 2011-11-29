@@ -17,6 +17,7 @@
 from subprocess import *
 import shlex
 import os
+import logging
 
 if not os.environ['NOVA_SSH_KEY_PATH']:
     print >> sys.stderr, "NOVA_SSH_KEY_PATH environment variable not set."
@@ -36,7 +37,9 @@ def execute(command, check=True):
     output, unused_err = process.communicate()
     retcode = process.poll()
     if retcode and check:
-        raise "%s failed with retcode: %s" % (command, retcode)
+        logging.error("%s failed with retcode: %s" % (command, retcode))
+        raise Exception
+
     return output
 
 def ssh(node, command, check=True):
@@ -46,7 +49,8 @@ def ssh(node, command, check=True):
     output, unused_err = process.communicate()
     retcode = process.poll()
     if retcode and check:
-        raise "ssh failed with retcode: %s" % retcode
+        logging.error("%s: ssh failed with retcode: %s" % (node, retcode))
+        raise Exception
     return output
 
 def execute_on_all(nodes, command):
