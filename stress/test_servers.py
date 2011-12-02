@@ -20,6 +20,7 @@ import random
 import sys
 import time
 import os
+import logging
 
 # import kong modules
 import kong.nova
@@ -32,6 +33,7 @@ import state
 import pending_action
 from basherexceptions import *
 import utils.env
+
 
 # borrowed from openstack-integration-tests/kong
 def assert_server_entity(server, connection):
@@ -93,12 +95,14 @@ class TestCreateVM(test_case.TestCase):
 
         # restrict number of instances we can launch
         if len(state.get_machines()) >= state.get_max_machines():
-            # self._logger.info("maximum number of machines created: %d" % 
-            #                   state.get_max_machines())
+            self._logger.debug("maximum number of machines created: %d" % 
+                               state.get_max_machines())
             return None
 
         _key_name = kwargs.get('key_name', '')
         _timeout = int(kwargs.get('timeout', 60))
+        _image_ref = int(kwargs.get('image_ref', 2))
+        _flavor_ref = int(kwargs.get('flavor_ref', 1))
 
         expected_server = {
             'name': 'server' + str(TestCreateVM.vm_id),
@@ -106,8 +110,8 @@ class TestCreateVM(test_case.TestCase):
                 'key1': 'value1',
                 'key2': 'value2',
                 },
-            'imageRef': 2,
-            'flavorRef': 1,
+            'imageRef': _image_ref,
+            'flavorRef': _flavor_ref,
             'adminPass': 'testpwd',
             'key_name' : _key_name
             }
