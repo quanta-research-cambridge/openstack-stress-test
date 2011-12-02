@@ -32,6 +32,7 @@ class PendingAction(object):
 
     def _check_for_status(self, state_string):
         """Check to see if the machine has transitioned states"""
+        t1 = time.time() # for debugging
         try:
             self._connection.wait_for_server_status(
                 self._target['id'],
@@ -41,12 +42,11 @@ class PendingAction(object):
         except AssertionError:
             # grab the actual state as we think it is
             temp_obj = self._state.get_machines()[self._target['id']]
-            self._logger.debug(
-                "machine %s in state %s" %
-                (self._target['id'],
-                 temp_obj[1])
-                )
+            self._logger.debug("machine %s in state %s" %
+                               (self._target['id'],temp_obj[1]))
+            self._logger.debug('%s, time: %d' % (temp_obj[1], time.time() - t1))
             return temp_obj[1]
+        self._logger.debug('%s, time: %d' % (state_string, time.time() - t1))
         return state_string
 
     @abc.abstractmethod

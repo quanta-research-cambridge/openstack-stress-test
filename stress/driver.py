@@ -68,7 +68,7 @@ def create_cases(choice_spec):
 def get_compute_nodes():
     nodes = []
     lines = utils.util.ssh(utils.env.NOVA_HOST,
-                     "nova-manage service list | fgrep nova-compute").\
+                     "nova-manage service list | grep ^nova-compute").\
                      split('\n')
     # For example: nova-compute xg11eth0 nova enabled :-) 2011-10-31 18:57:46
     for line in lines:

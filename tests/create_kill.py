@@ -36,7 +36,10 @@ key_name = str(uuid.uuid1())
 choice_spec = [
     BasherChoice(TestCreateVM(), 50,
                  kargs={'timeout' : '600',
-                        'key_name' : key_name}),
+                        'key_name' : key_name,
+                        'image_ref' : 2,
+                        'flavor_ref' : 1}
+                 ),
     BasherChoice(TestKillActiveVM(), 50,
                  kargs={'timeout' : '600'})
 ]
@@ -53,7 +56,7 @@ create_keypair(nova, key_name)
 bash_openstack(nova,
                choice_spec,
                duration=datetime.timedelta(seconds=180),
-               sleep_time=500, # in milliseconds
+               sleep_time=100, # in milliseconds
                seed=int(time.time()),
                test_name="create and delete",
                max_vms=32)
