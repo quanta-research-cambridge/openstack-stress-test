@@ -1,5 +1,5 @@
-OpenStack Basher Test System
-============================
+Quanta Research Cambridge OpenStack Stress Test System
+======================================================
 
 This is a framework for stress testing an OpenStack Nova cluster.
 
@@ -21,7 +21,7 @@ We will first create a subdirectory in your home directory::
 
 Clone a copy of openstack-stress-test::
 
-  git clone https://github.com/quanta-research-cambridge/openstack-stress-test.g
+  git clone https://github.com/quanta-research-cambridge/openstack-stress-test.git
 
 Set ``PYTHONPATH`` to include the  ``stress`` module. You may want to
 edit your ``.bashrc`` (or shell configuration) to modify the
