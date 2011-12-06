@@ -1,4 +1,4 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
+"""Test that reboots random machines in a Nova cluster"""
 
 # Copyright 2011 Quanta Research Cambridge, Inc.
 #

@@ -1,4 +1,5 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
+"""Sample stress test that creates a few virtual machines and then 
+destroys them"""
 
 # Copyright 2011 Quanta Research Cambridge, Inc.
 #

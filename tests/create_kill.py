@@ -1,4 +1,5 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
+"""More aggressive test that creates and destroys VMs with shorter 
+sleep times"""
 
 # Copyright 2011 Quanta Research Cambridge, Inc.
 #
