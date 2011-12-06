@@ -1,4 +1,6 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
+"""Abstract class for implementing an action. You only need to override 
+the `run` method which specifies all the actual nova API class you wish
+to make."""
 
 # Copyright 2011 Quanta Research Cambridge, Inc.
 #
@@ -14,10 +16,13 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+__author__ = "Eugene Shih"
+
 import logging
 import abc
 
 class TestCase(object):
+
     __metaclass__ = abc.ABCMeta
 
     def __init__(self):

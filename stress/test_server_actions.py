@@ -1,4 +1,8 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
+"""Defines various ub-classes of the `TestCase` and
+`PendingAction` class. The sub-classes of TestCase implement various
+API calls on the Nova cluster having to do with Server Actions. Each
+sub-class will have a corresponding PendingAction. These pending
+actions veriy that the API call was successful or not."""
 
 # Copyright 2011 Quanta Research Cambridge, Inc.
 #
@@ -37,6 +41,18 @@ class TestRebootVM(test_case.TestCase):
     """Reboot a server"""
 
     def run(self, connection, state, *pargs, **kwargs):
+        """
+        Send an HTTP POST request to the nova cluster to reboot a random
+        server. Update state of object in `state` variable to indicate that
+        it is rebooting.
+        `connection` : object returned by kong.nova.API
+        `state`      : `State` object describing our view of state of cluster
+        `pargs`      : positional arguments
+        `kwargs`     : keyword arguments, which include:
+                       `timeout` : how long to wait before issuing Exception
+                       `type`    : reboot type [SOFT or HARD] (default is SOFT)
+        """
+
         vms = state.get_machines()
         active_vms = [v for k, v in vms.iteritems() if v and v[1] == 'ACTIVE']
         # no active vms, so return null
@@ -44,7 +60,7 @@ class TestRebootVM(test_case.TestCase):
             self._logger.info('no ACTIVE machines to reboot')
             return
 
-        reboot_type = kwargs.get('type', 'SOFT')
+        _reboot_type = kwargs.get('type', 'SOFT')
         _timeout = kwargs.get('timeout', 600)
 
         # select active vm to reboot and then send request to nova controller
@@ -54,7 +70,7 @@ class TestRebootVM(test_case.TestCase):
         # allocate public address to this vm
         _ip_addr = allocate_ip(connection, reboot_target)
 
-        reboot_body = { 'type': reboot_type }
+        reboot_body = { 'type': _reboot_type }
         post_body = json.dumps({'reboot' : reboot_body})
         url = '/servers/%s/action' % reboot_target['id']
         (response, body) = connection.request('POST',
@@ -65,7 +81,7 @@ class TestRebootVM(test_case.TestCase):
             self._logger.error("response: %s" % response)
             raise Exception
 
-        if reboot_type == 'SOFT':
+        if _reboot_type == 'SOFT':
             state_name = 'REBOOT'
         else:
             state_name = 'REBOOT' ### this is a bug, should be HARD_REBOOT
@@ -93,17 +109,17 @@ class TestRebootVM(test_case.TestCase):
                               (reboot_target['id'], state_name))
             state.set_machine_state(reboot_target['id'],
                                     (reboot_target, state_name))
-            
+
         return VerifyRebootVM(connection,
                               state,
                               reboot_target,
                               timeout=_timeout,
-                              reboot_type=reboot_type,
+                              reboot_type=_reboot_type,
                               state_name=state_string,
                               ip_addr=_ip_addr)
 
 class VerifyRebootVM(pending_action.PendingAction):
-
+    """Class to verify that the reboot completed."""
     States = enum('REBOOT_CHECK', 'ACTIVE_CHECK')
 
     def __init__(self, connection, state, target_server, 
@@ -128,6 +144,10 @@ class VerifyRebootVM(pending_action.PendingAction):
             self._retry_state = self.States.ACTIVE_CHECK
 
     def retry(self):
+        """
+        Check to see that the server of interest has actually rebooted. Update
+        state to indicate that server is running again.
+        """
         # don't run reboot verification if target machine has been
         # deleted or is going to be deleted
         if (self._target['id'] not in self._state.get_machines().keys() or
@@ -163,8 +183,6 @@ class VerifyRebootVM(pending_action.PendingAction):
         #     self._logger.error('machine: %s, ip: %s, pwd: %s' %
         #                        (self._target['id'], ip, admin_pass))
         #     raise Exception
-        
-            
         self._logger.info('machine %s REBOOT -> ACTIVE [%.1f secs elapsed]' %
                               (self._target['id'], time.time() - self._start_time))
         self._state.set_machine_state(self._target['id'],
@@ -174,11 +192,21 @@ class VerifyRebootVM(pending_action.PendingAction):
 
         return True
 
-
 class TestResizeVM(test_case.TestCase):
     """Resize a server (change flavors)"""
 
     def run(self, connection, state, *pargs, **kwargs):
+        """
+        Send an HTTP POST request to the nova cluster to resize a random
+        server. Update `state` to indicate server is rebooting.
+
+        `connection` : object returned by kong.nova.API
+        `state`      : `State` object describing our view of state of cluster
+        `pargs`      : positional arguments
+        `kwargs`     : keyword arguments, which include:
+                       `timeout` : how long to wait before issuing Exception
+        """
+
         vms = state.get_machines()
         active_vms = [v for k, v in vms.iteritems() if v and v[1] == 'ACTIVE']
         # no active vms, so return null
@@ -226,7 +254,7 @@ class TestResizeVM(test_case.TestCase):
                               timeout=_timeout)
 
 class VerifyResizeVM(pending_action.PendingAction):
-
+    """Verify that resizing of a VM was successful"""
     States = enum('VERIFY_RESIZE_CHECK', 'ACTIVE_CHECK')
 
     def __init__(self, connection, state, created_server, 
@@ -240,6 +268,10 @@ class VerifyResizeVM(pending_action.PendingAction):
         self._state_name = state_name
 
     def retry(self):
+        """
+        Check to see that the server was actually resized. And change `state`
+        of server to running again.
+        """
         # don't run resize if target machine has been deleted
         # or is going to be deleted
         if (self._target['id'] not in self._state.get_machines().keys() or

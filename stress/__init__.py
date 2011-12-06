@@ -1,5 +1,5 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
+"""Basic framework for constructing various simulated workloads for a 
+nova cluster."""
 # Copyright 2011 Quanta Research Cambridge, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
