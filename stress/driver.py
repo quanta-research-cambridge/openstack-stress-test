@@ -174,7 +174,7 @@ def bash_openstack(connection,
         time.sleep(sleep_time)
         # Check error logs after 100 actions
         if logcheck_count > 100:
-            if error_in_logs(computes):
+            if _error_in_logs(computes):
                 test_succeeded = False
                 break
             else:
