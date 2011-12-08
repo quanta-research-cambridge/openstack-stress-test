@@ -30,24 +30,24 @@ following statement::
 
   export PYTHONPATH=$HOME/install/openstack-stress-test:$PYTHONPATH
 
-Our code uses some of kong's libraries. To install kong /
-openstack-integration-tests, get a copy of kong from their git
+Our code uses some of kong's libraries. To install 
+openstack integration tests, get a copy of tempest from their git
 repository::
 
-  git clone https://github.com/openstack/openstack-integration-tests.git 
+  git clone https://github.com/openstack/tempest.git
 
 Switch to the kong version that we developed with::
 
-  cd openstack-integration-tests
+  cd tempest
   git checkout 8a84d2efc453c9c1c5210339c4b1724736a48230
   cd ..
 
-We need to set ``PYTHONPATH`` to include ``kong``. You may want to
+We need to set ``PYTHONPATH`` to include ``tempest``. You may want to
 edit your ``.bashrc`` (or shell configuration) to modify the
 ``PYTHONPATH`` environment variable. For now, simply execute the
 following statement::
 
-  export PYTHONPATH=[ROOT]/openstack-integration-tests:[ROOT]/openstack-stress-test:$PYTHONPATH
+  export PYTHONPATH=[ROOT]/tempest:[ROOT]/openstack-stress-test:$PYTHONPATH
 
 There are a few packages that kong depends on::
 
