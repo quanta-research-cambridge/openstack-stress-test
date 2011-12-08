@@ -30,4 +30,5 @@ class State(dict):
     def set_machine_state(self, key, val):
         if not val:
             del self._machines[key]
-        self._machines[key] = val
+        else:
+            self._machines[key] = val
