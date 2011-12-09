@@ -65,8 +65,9 @@ The following environment variables will also need to be defined::
   NOVA_URL
   NOVA_VERSION
 
-In our setup, we use ``nova-manage [project name] [zipfile name]`` to
-generate a file that contains these values. The file is then sourced
+In our setup, we use ``nova-manage [project name] [zipfile name]`` on
+the Nova controller to generate a file (``novarc``) that contains
+these settings for these values. The file is then sourced locally
 before the test is executed.
 
 Finally, you will need to provide the path to the private SSH key that
