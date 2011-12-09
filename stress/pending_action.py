@@ -1,4 +1,5 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
+"""Describe follow-up actions using `PendingAction` class to verify
+that nova API calls such as create/delete are completed"""
 
 # Copyright 2011 Quanta Research Cambridge, Inc.
 #
@@ -14,14 +15,30 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+__author__ = "Eugene Shih"
+
 import logging
 import time
 import abc
 
 class PendingAction(object):
+    """
+    Initialize and describe actions to verify that a Nova API call
+    is successful.
+    """
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, nova_connection, state, target_server, timeout=600):
+        """
+        `nova_connection` : object returned by `kong.nova.API`
+        `state`           : externally maintained data structure about
+                            state of VMs or other persistent objects in
+                            the nova cluster
+        `target_server`   : server that we actions were performed on
+        `target_server`   : time before we declare a TimeoutException
+        `pargs`           : positional arguments
+        `kargs`           : keyword arguments
+        """
         self._connection = nova_connection
         self._state = state
         self._target = target_server

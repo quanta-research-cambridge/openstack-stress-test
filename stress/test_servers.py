@@ -1,4 +1,8 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
+"""Defines various ub-classes of the `TestCase` and
+`PendingAction` class. The sub-classes of TestCase implement various
+API calls on the Nova cluster having to do with creating and deleting VMs.
+Each sub-class will have a corresponding PendingAction. These pending
+actions veriy that the API call was successful or not."""
 
 # Copyright 2011 Quanta Research Cambridge, Inc.
 #
@@ -13,6 +17,8 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
+
+__author__ = "Eugene Shih"
 
 # system imports
 import json
@@ -34,9 +40,8 @@ import pending_action
 from basherexceptions import *
 import utils.env
 
-
 # borrowed from openstack-integration-tests/kong
-def assert_server_entity(server, connection):
+def _assert_server_entity(server, connection):
 
     actual_keys = set(server.keys())
     expected_keys = set((
@@ -88,10 +93,25 @@ def assert_server_entity(server, connection):
 
 
 class TestCreateVM(test_case.TestCase):
-    vm_id = 0
+    """Create a virtual machine in the Nova cluster."""
+    _vm_id = 0
 
     def run(self, connection, state, *pargs, **kwargs):
-        """Build a server with a password"""
+        """
+        Send an HTTP POST request to the nova cluster to build a
+        server. Update the state variable to track state of new server
+        and set to PENDING state.
+
+        `connection` : object returned by kong.nova.API
+        `state`      : `State` object describing our view of state of cluster
+        `pargs`      : positional arguments
+        `kwargs`     : keyword arguments, which include:
+                       `key_name`  : name of keypair
+                       `timeout`   : how long to wait before issuing Exception
+                       `image_ref` : index to image types availablexs
+                       `flavor_ref`: index to flavor types available
+                                     (default = 1, which is tiny)
+        """
 
         # restrict number of instances we can launch
         if len(state.get_machines()) >= state.get_max_machines():
@@ -105,7 +125,7 @@ class TestCreateVM(test_case.TestCase):
         _flavor_ref = int(kwargs.get('flavor_ref', 1))
 
         expected_server = {
-            'name': 'server' + str(TestCreateVM.vm_id),
+            'name': 'server' + str(TestCreateVM._vm_id),
             'metadata': {
                 'key1': 'value1',
                 'key2': 'value2',
@@ -115,7 +135,7 @@ class TestCreateVM(test_case.TestCase):
             'adminPass': 'testpwd',
             'key_name' : _key_name
             }
-        TestCreateVM.vm_id = TestCreateVM.vm_id + 1
+        TestCreateVM._vm_id = TestCreateVM._vm_id + 1
 
         post_body = json.dumps({'server': expected_server})
         (response, body) = connection.request('POST',
@@ -142,7 +162,7 @@ class TestCreateVM(test_case.TestCase):
                               timeout=_timeout)
 
 class VerifyCreateVM(pending_action.PendingAction):
-
+    """Verify that VM was built and is running"""
     def __init__(self, connection,
                  state,
                  created_server,
@@ -155,6 +175,10 @@ class VerifyCreateVM(pending_action.PendingAction):
         self._expected = expected_server
 
     def retry(self):
+        """
+        Check to see that the server was created and is running.
+        Update local view of state to indicate that it is running.
+        """
         # don't run create verification
         # if target machine has been deleted or is going to be deleted
         if (self._target['id'] not in self._state.get_machines().keys() or
@@ -170,7 +194,7 @@ class VerifyCreateVM(pending_action.PendingAction):
             raise TimeoutException
 
         admin_pass = self._target['adminPass']
-        assert_server_entity(self._target, self._connection)
+        _assert_server_entity(self._target, self._connection)
         if ((self._expected['name'] != self._target['name']) or
             (self._expected['metadata'] != self._target['metadata']) or
             (self._expected['adminPass'] != admin_pass) or
@@ -214,9 +238,18 @@ class VerifyCreateVM(pending_action.PendingAction):
         return True
 
 class TestKillActiveVM(test_case.TestCase):
-
+    """Class to destroy a random ACTIVE server."""
     def run(self, connection, state, *pargs, **kwargs):
-        
+        """
+        Send an HTTP POST request to the nova cluster to destroy
+        a random ACTIVE server. Update `state` to indicate TERMINATING.
+
+        `connection` : object returned by kong.nova.API
+        `state`      : `State` object describing our view of state of cluster
+        `pargs`      : positional arguments
+        `kwargs`     : keyword arguments, which include:
+                       `timeout` : how long to wait before issuing Exception
+        """
         # check for active machines
         vms = state.get_machines()
         active_vms = [v for k, v in vms.iteritems() if v and v[1] == 'ACTIVE']
@@ -226,7 +259,7 @@ class TestKillActiveVM(test_case.TestCase):
             return
 
         _timeout = kwargs.get('timeout', 600)
-        
+
         target = random.choice(active_vms)
         kill_target = target[0]
         connection.delete_server(kill_target['id'])
@@ -237,8 +270,15 @@ class TestKillActiveVM(test_case.TestCase):
         return VerifyKillActiveVM(connection, state, kill_target, timeout=_timeout)
 
 class VerifyKillActiveVM(pending_action.PendingAction):
+    """Verify that server was destroyed"""
 
     def retry(self):
+        """
+        Check to see that the server of interest is destroyed. Update
+        state to indicate that server is destroyed by deleting it from local
+        view of state.
+        """
+
         # if target machine has been deleted from the state, then it was
         # already verified to be deleted
         if (not self._target['id'] in self._state.get_machines().keys()):
@@ -264,8 +304,19 @@ class VerifyKillActiveVM(pending_action.PendingAction):
         return True
 
 class TestKillAnyVM(test_case.TestCase):
+    """Class to destroy a random server regardless of state."""
 
     def run(self, connection, state, *pargs, **kwargs):
+        """
+        Send an HTTP POST request to the nova cluster to destroy
+        a random server. Update state to TERMINATING.
+
+        `connection` : object returned by kong.nova.API
+        `state`      : `State` object describing our view of state of cluster
+        `pargs`      : positional arguments
+        `kwargs`     : keyword arguments, which include:
+                       `timeout` : how long to wait before issuing Exception
+        """
 
         vms = state.get_machines()
         # no vms, so return null
@@ -287,9 +338,18 @@ class TestKillAnyVM(test_case.TestCase):
 VerifyKillAnyVM = VerifyKillActiveVM
 
 class TestUpdateVMName(test_case.TestCase):
-
+    """Class to change the name of the active server"""
     def run(self, connection, state, *pargs, **kwargs):
-        """Change the name of active server"""
+        """
+        Issue HTTP POST request to change the name of active server.
+        Update state of server to reflect name changing.
+
+        `connection` : object returned by kong.nova.API
+        `state`      : `State` object describing our view of state of cluster
+        `pargs`      : positional arguments
+        `kwargs`     : keyword arguments, which include:
+                       `timeout`   : how long to wait before issuing Exception
+        """
 
         # select one machine from active ones
         vms = state.get_machines()
@@ -320,7 +380,7 @@ class TestUpdateVMName(test_case.TestCase):
 
         data = json.loads(body)
         assert(data.keys() == ['server'])
-        assert_server_entity(data['server'], connection)
+        _assert_server_entity(data['server'], connection)
         assert(update_target['name'] + '_updated' == data['server']['name'])
 
         self._logger.info('machine %s: ACTIVE -> UPDATING_NAME' %
@@ -334,8 +394,11 @@ class TestUpdateVMName(test_case.TestCase):
                                   timeout=_timeout)
 
 class VerifyUpdateVMName(pending_action.PendingAction):
-
+    """Check that VM has new name"""
     def retry(self):
+        """
+        Check that VM has new name. Update local view of `state` to RUNNING.
+        """
         # don't run update verification
         # if target machine has been deleted or is going to be deleted
         if (not self._target['id'] in self._state.get_machines().keys() or
@@ -357,7 +420,7 @@ class VerifyUpdateVMName(pending_action.PendingAction):
             self._logger.error(data.keys())
             raise Exception
 
-        assert_server_entity(data['server'], self._connection)
+        _assert_server_entity(data['server'], self._connection)
         if self._target['name'] != data['server']['name']:
             self._logger.error(self._target['name'] +
                                ' vs. ' +

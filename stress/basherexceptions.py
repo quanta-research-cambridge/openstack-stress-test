@@ -1,4 +1,4 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
+"""Exceptions for the `stress` module"""
 
 # Copyright 2011 Quanta Research Cambridge, Inc.
 #
@@ -13,6 +13,8 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
+
+__author__ = "Eugene Shih"
 
 class TimeoutException(Exception):
     """ Exception on timeout """
